@@ -7,5 +7,6 @@ const context = readFileSync('docs/PROJECT-CONTEXT.md', 'utf8');
 
 test('project context keeps the deliberate Go Back design', () => {
   assert.match(context, /ex-held password/i);
-  assert.match(context, /\$100/);
+  assert.match(context, /one-time/i);
+  assert.match(context, /no subscription/i);
 });

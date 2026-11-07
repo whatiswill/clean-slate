@@ -11,7 +11,7 @@ Clean Slate is a breakup app that puts a relationship's digital history out of s
 
 ## Fixed product decisions (do not redesign)
 - The ex-held Go Back password is deliberate. The ex receives only a meaningless code by email: no content, no relationship details. Raise risks about it, but never propose removing or replacing it.
-- The core price is $100, one time, not a subscription. Go Back is a separate paid unlock.
+- One-time purchase, not a subscription. Go Back is a separate paid unlock. The core price is open ($100 was the starting idea); treat it as something to test, not a fixed decision.
 - A guided, manual cleanup route is a first-class option, not a fallback. AI-assisted discovery is optional.
 
 ## Rules
