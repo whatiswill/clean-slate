@@ -1,0 +1,65 @@
+name: Studio AI Review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, labeled]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Review type
+        type: choice
+        options: [creative, code]
+        default: creative
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: studio-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.action != 'labeled' || github.event.label.name == 'creative-review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODE: ${{ inputs.mode || (github.event.action == 'labeled' && 'creative') || 'code' }}
+      BASE_REF: ${{ github.base_ref || 'main' }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        run: eval "$(node -p "require('./studio/studio.json').commands.build")"
+      - name: Install browser for captures
+        if: env.MODE == 'creative'
+        run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - name: Capture screenshots
+        if: env.MODE == 'creative'
+        run: eval "$(node -p "require('./studio/studio.json').commands.capture")"
+      - name: Run tests
+        if: env.MODE == 'code'
+        run: |
+          mkdir -p studio-out
+          set +e
+          eval "$(node -p "require('./studio/studio.json').commands.test")" 2>&1 | tee studio-out/tests.log
+          echo "TEST_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+      - name: Send to GPT
+        run: |
+          if [ "$MODE" = "code" ]; then
+            node studio/review.mjs --mode code --base "origin/$BASE_REF" --tests studio-out/tests.log
+          else
+            node studio/review.mjs --mode creative
+          fi
+      - name: Fail if tests failed
+        if: env.MODE == 'code' && env.TEST_EXIT != '0'
+        run: exit 1

@@ -1,0 +1,17 @@
+{
+  "game": "Clean Slate",
+  "model": "gpt-6.1-terra",
+  "maxOutputTokens": 4000,
+  "maxDiffChars": 60000,
+  "maxImages": 8,
+  "context": [
+    "CLAUDE.md",
+    "docs/PROJECT-CONTEXT.md"
+  ],
+  "commands": {
+    "build": "true",
+    "test": "npm test",
+    "capture": "echo No screens to capture yet"
+  },
+  "imagesDir": "studio-out/images"
+}

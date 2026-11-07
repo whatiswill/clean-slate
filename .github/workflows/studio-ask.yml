@@ -1,0 +1,29 @@
+# Saves GPT's answers to design questions on ask/ branches. It never touches main.
+name: Studio Ask
+
+on:
+  push:
+    branches: ['ask/**']
+    paths: ['studio/questions/**']
+
+permissions:
+  contents: write
+
+jobs:
+  ask:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node studio/ask.mjs
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - run: |
+          git config user.name "studio-ask"
+          git config user.email "studio-ask@users.noreply.github.com"
+          git add studio/questions
+          git commit -m "Add GPT design answer" || exit 0
+          git push
